@@ -12,9 +12,9 @@ import (
 // object of type T.
 type UnmarshalFunc[T any] func([]byte, T) error
 
-// ValidateFunc is a function that validates a configuration object of type T
+// FinalizeFunc is a function that validates a configuration object of type T
 // and returns an error if validation fails.
-type ValidateFunc[T any] func(T) error
+type FinalizeFunc[T any] func(T) error
 
 // ReadConfig reads a configuration file, unmarshals its content into the given
 // configuration object, and validates it.
@@ -22,7 +22,7 @@ type ValidateFunc[T any] func(T) error
 // If the primary path is empty, it searches for the configuration file in the
 // fallback paths. Returns the resolved path or an error if the file cannot be
 // located, read, unmarshaled, or validated.
-func ReadConfig[T any](path string, searchPaths []string, c *T, unmarshal UnmarshalFunc[*T], validate ValidateFunc[T]) (string, error) {
+func ReadConfig[T any](path string, searchPaths []string, c *T, unmarshal UnmarshalFunc[*T], finalize FinalizeFunc[*T]) (string, error) {
 	var err error
 
 	path, err = FindConfig(path, searchPaths)
@@ -30,7 +30,7 @@ func ReadConfig[T any](path string, searchPaths []string, c *T, unmarshal Unmars
 		return "", err
 	}
 
-	return path, ReadFoundConfig(path, c, unmarshal, validate)
+	return path, ReadFoundConfig(path, c, unmarshal, finalize)
 }
 
 // ReadFoundConfig reads and processes a configuration file from a known path.
@@ -38,7 +38,7 @@ func ReadConfig[T any](path string, searchPaths []string, c *T, unmarshal Unmars
 // Unmarshals the file's content into the given configuration object and
 // validates it. Returns an error if the file cannot be read, unmarshaled, or
 // validated.
-func ReadFoundConfig[T any](path string, c *T, unmarshal UnmarshalFunc[*T], validate ValidateFunc[T]) error {
+func ReadFoundConfig[T any](path string, c *T, unmarshal UnmarshalFunc[*T], finalize FinalizeFunc[*T]) error {
 	content, err := os.ReadFile(path)
 	if err != nil {
 		return fmt.Errorf("unable to read configuration file %s: %w", path, err)
@@ -49,7 +49,7 @@ func ReadFoundConfig[T any](path string, c *T, unmarshal UnmarshalFunc[*T], vali
 		return fmt.Errorf("unable to unmarshal configuration file %s: %w", path, err)
 	}
 
-	return validate(*c)
+	return finalize(c)
 }
 
 // FindConfig determines the path to the configuration file by using the
