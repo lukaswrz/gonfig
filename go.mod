@@ -1,4 +1,4 @@
-module github.com/lukaswrz/gonfig
+module codeberg.org/helvetica/gonfig
 
 go 1.23.3
 
